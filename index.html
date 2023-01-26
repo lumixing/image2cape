@@ -22,7 +22,7 @@
         </div>
         <div class="crop panel">
             <div class="cropper-container">
-                <img src="/assets/duck.png" id="cropper" />
+                <img src="assets/duck.png" id="cropper" />
             </div>
         </div>
         <div class="settings panel">
@@ -242,14 +242,14 @@
             canvas: document.getElementById("skin_container"),
             width: 400,
             height: 500,
-            skin: "/assets/skin.png",
+            skin: "assets/skin.png",
         });
         skinViewer.width = 400;
         skinViewer.height = 500;
-        skinViewer.loadCape("/assets/cape.png");
+        skinViewer.loadCape("assets/cape.png");
         skinViewer.fov = 70;
         skinViewer.zoom = 0.75;
-        const capeImageOriginal = await Jimp.read("/assets/cape.png");
+        const capeImageOriginal = await Jimp.read("assets/cape.png");
 
         let cropper = new Cropper(document.getElementById("cropper"), {
             initialAspectRatio: 5 / 8,
