@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>image2cape</title>
+        <script src="https://cdn.jsdelivr.net/npm/skinview3d@3.0.0-alpha.1/bundles/skinview3d.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jimp/0.16.2/jimp.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css"
+        />
+    </head>
+    <body>
+        <div id="snackbar"></div>
+        <div class="preview panel">
+            <p style="color: gray">drag to rotate, scroll to zoom</p>
+            <canvas id="skin_container"></canvas>
+        </div>
+        <div class="crop panel">
+            <div class="cropper-container">
+                <img src="duck.png" id="cropper" />
+            </div>
+        </div>
+        <div class="settings panel">
+            <h1 style="font-size: 20px">image2cape v1.0</h1>
+            <div class="setting">
+                <div class="label">front image</div>
+                <div class="value">
+                    <label for="cape-front"> upload </label>
+                    <input type="file" id="cape-front" accept="image/png, image/jpeg, image/webp" />
+                </div>
+            </div>
+            <div class="setting">
+                <div class="label">resolution</div>
+                <div id="value">
+                    <input
+                        type="number"
+                        id="resolution"
+                        min="1"
+                        max="16"
+                        value="8"
+                        step="0.2"
+                        style="width: 60px"
+                    />
+                </div>
+            </div>
+            <button id="download">download</button>
+            <div class="info" style="width: 500px">
+                <h1 style="font-size: 20px">how to replace migrator cape texture?</h1>
+                <p>
+                    after downloading the texture, delete the .png extension and replace it at
+                    .minecraft/assets/skins/17/
+                </p>
+                <p>
+                    if you cant see the .png extension,
+                    <a href="https://i.imgur.com/tSFUnmI.png">enable extensions</a>
+                </p>
+            </div>
+        </div>
+    </body>
+</html>
+
+<style>
+    @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap");
+    * {
+        font-family: "jetbrains mono";
+        font-size: 16px;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        background-color: #000;
+        color: #eee;
+        display: flex;
+    }
+
+    a {
+        color: rgb(30, 144, 255, 0.7);
+        transition: color 0.1s;
+    }
+
+    a:hover {
+        color: rgb(30, 144, 255, 0.9);
+    }
+
+    .panel {
+        flex: 1;
+        height: 100%;
+    }
+
+    .preview {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        flex: 0;
+    }
+
+    .crop {
+        display: flex;
+    }
+
+    .settings {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .setting {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    button,
+    label[for="cape-front"] {
+        background-color: rgb(30, 144, 255, 0.5);
+        color: white;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background-color 0.1s;
+        border-radius: 1000px;
+    }
+
+    button:hover,
+    label[for="cape-front"]:hover {
+        background-color: rgb(30, 144, 255, 0.7);
+    }
+
+    button:active,
+    label[for="cape-front"]:active {
+        background-color: rgb(30, 144, 255, 0.9);
+    }
+
+    input[type="number"] {
+        outline: 0;
+        border: 0;
+        background-color: rgb(15, 15, 15, 0.5);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 1000px;
+        transition: background-color 0.1s;
+    }
+
+    input[type="number"]:hover {
+        background-color: rgb(15, 15, 15, 0.7);
+    }
+
+    input[type="number"]:focus {
+        background-color: rgb(15, 15, 15, 0.9);
+    }
+
+    #snackbar {
+        visibility: hidden; /* Hidden by default. Visible on click */
+        min-width: 250px; /* Set a default minimum width */
+        margin-left: -125px; /* Divide value of min-width by 2 */
+        background-color: #333; /* Black background color */
+        color: #fff; /* White text color */
+        text-align: center; /* Centered text */
+        border-radius: 1000px; /* Rounded borders */
+        padding: 8px 16px; /* Padding */
+        position: fixed; /* Sit on top of the screen */
+        z-index: 1; /* Add a z-index if needed */
+        left: 50%; /* Center the snackbar */
+        bottom: 30px; /* 30px from the bottom */
+    }
+
+    /* Show the snackbar when clicking on a button (class added with JavaScript) */
+    #snackbar.show {
+        visibility: visible; /* Show the snackbar */
+        /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+        -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+
+    /* Animations to fade the snackbar in and out */
+    @-webkit-keyframes fadein {
+        from {
+            bottom: 0;
+            opacity: 0;
+        }
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadein {
+        from {
+            bottom: 0;
+            opacity: 0;
+        }
+        to {
+            bottom: 30px;
+            opacity: 1;
+        }
+    }
+
+    @-webkit-keyframes fadeout {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+        to {
+            bottom: 0;
+            opacity: 0;
+        }
+    }
+
+    @keyframes fadeout {
+        from {
+            bottom: 30px;
+            opacity: 1;
+        }
+        to {
+            bottom: 0;
+            opacity: 0;
+        }
+    }
+</style>
+
+<script>
+    $(document).ready(async () => {
+        const supportedImageFormats = ["image/png", "image/jpeg", "image/webp"];
+        let lastCrop = 0;
+        let globalBuffer;
+        let capeBack = "color";
+        let skinViewer = new skinview3d.SkinViewer({
+            canvas: document.getElementById("skin_container"),
+            width: 400,
+            height: 500,
+            skin: "skin.png",
+        });
+        skinViewer.width = 400;
+        skinViewer.height = 500;
+        skinViewer.loadCape("cape.png");
+        skinViewer.fov = 70;
+        skinViewer.zoom = 0.75;
+        const capeImageOriginal = await Jimp.read("cape.png");
+
+        let cropper = new Cropper(document.getElementById("cropper"), {
+            initialAspectRatio: 5 / 8,
+            viewMode: 1,
+            dragMode: "move",
+            background: false,
+            crop(e) {
+                if (Date.now() - lastCrop < 50) return;
+                lastCrop = Date.now();
+                let n = parseFloat($("#resolution").val());
+
+                let cropCanvas = this.cropper.getCroppedCanvas({
+                    width: 12 * n,
+                    height: 18 * n,
+                });
+
+                let cropImageURL = cropCanvas.toDataURL("crop.png");
+                let capeImage = capeImageOriginal.clone();
+                capeImage.resize(64 * n, 32 * n, Jimp.RESIZE_NEAREST_NEIGHBOR);
+
+                Jimp.read(cropImageURL)
+                    .then((cropImage) => {
+                        cropImage.resize(12 * n, 18 * n);
+                        capeImage.blit(cropImage, 0, 0);
+                        return cropImage.getBase64Async(Jimp.MIME_PNG);
+                    })
+                    .then((duplicateBuffer) => {
+                        return Jimp.read(duplicateBuffer);
+                    })
+                    .then((part) => {
+                        let bottomPart = part.clone();
+                        bottomPart.crop(n, 17 * n, 10 * n, n);
+                        bottomPart.flip(false, true);
+                        capeImage.blit(bottomPart, 11 * n, 0);
+                        let backPart = part.clone();
+                        backPart.crop(n, n, 10 * n, 16 * n);
+                        backPart.flip(true, false);
+                        capeImage.blit(backPart, 12 * n, n);
+                        return capeImage.getBase64Async(Jimp.MIME_PNG);
+                    })
+                    .then((buffer) => {
+                        skinViewer.loadCape(buffer);
+                        globalBuffer = buffer;
+                    });
+            },
+        });
+
+        $("#cape-front").change(async (event) => {
+            const file = event.target.files[0];
+
+            if (!supportedImageFormats.includes(file.type)) {
+                showSnackbar("unsupported image format! use .png, .jpeg or .webp");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.addEventListener("load", (e) => {
+                cropper.replace(e.target.result);
+            });
+            reader.readAsDataURL(file);
+        });
+
+        $("input[type=radio][name=cape-back]").change((e) => {
+            capeBack = e.target.value;
+            if (e.target.value === "color") {
+                $("#cape-back-image-menu").hide();
+                $("#cape-back-color-menu").show();
+            } else if (e.target.value === "other-image") {
+                $("#cape-back-image-menu").show();
+                $("#cape-back-color-menu").hide();
+            } else {
+                $("#cape-back-color-menu").hide();
+                $("#cape-back-image-menu").hide();
+            }
+        });
+
+        $("#download").click(() => {
+            let a = document.createElement("a");
+            a.href = globalBuffer;
+            a.download = "17f76a23ff4d227a94ea3d5802dccae9f2ae9aa9";
+            a.click();
+            showSnackbar("downloading cape...");
+        });
+
+        $("#resolution").change(() => {
+            // update the cropper
+            cropper.rotate(0);
+        });
+
+        function showSnackbar(text) {
+            $("#snackbar").text(text);
+            $("#snackbar").addClass("show");
+            setTimeout(() => {
+                $("#snackbar").removeClass("show");
+            }, 3000);
+        }
+    });
+</script>
